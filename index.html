@@ -72,6 +72,11 @@ footer { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line)
         <p class="legal">© 2026 Chrizantus Nehring. Konzept, Präsentation, Video, Design und Software sind urheberrechtlich geschützt. Weitergabe, Vervielfältigung oder Umsetzung nur mit schriftlicher Zustimmung des Urhebers.</p>
       </div>
       <section class="block">
+        <h2>Neu: Antwort auf Ihre Rückmeldung · 11.11.2026</h2>
+        <p class="legal">Wie Kunden die App haben wollen und wie sie mit der BMW-Händlerschnittstelle und dem Bonusprogramm zusammenspielt. Alle sechs vorgeschlagenen Funktionen sind bereits im Prototyp umgesetzt (Version 0.6).</p>
+        <div class="pages" id="antwort"></div>
+      </section>
+      <section class="block">
         <h2>Vorstellung · 7 Minuten</h2>
         <div class="player"><video id="video" controls playsinline preload="metadata" controlslist="nodownload" disablepictureinpicture></video></div>
         <p class="status" id="vstatus"></p>
@@ -130,16 +135,20 @@ footer { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line)
       b.addEventListener("click", () => { v.currentTime = s; v.play().catch(() => {}); });
       $("chapters").appendChild(b);
     });
-    try {
-      const seiten = await entschluesseln(key, await laden("konzept.bin"));
-      const dv = new DataView(seiten.buffer); const n = dv.getUint32(0); let pos = 4;
-      for (let i = 0; i < n; i++) {
-        const len = dv.getUint32(pos); pos += 4;
-        const img = new Image(); img.alt = `Konzept, Seite ${i + 1} von ${n}`; img.draggable = false;
-        img.src = URL.createObjectURL(new Blob([seiten.slice(pos, pos + len)], { type: "image/jpeg" }));
-        $("pages").appendChild(img); pos += len;
-      }
-    } catch { $("pages").textContent = "Das Konzept konnte nicht geladen werden. Bitte Seite neu laden."; }
+    async function seitenZeigen(datei, ziel, name) {
+      try {
+        const seiten = await entschluesseln(key, await laden(datei));
+        const dv = new DataView(seiten.buffer); const n = dv.getUint32(0); let pos = 4;
+        for (let i = 0; i < n; i++) {
+          const len = dv.getUint32(pos); pos += 4;
+          const img = new Image(); img.alt = `${name}, Seite ${i + 1} von ${n}`; img.draggable = false;
+          img.src = URL.createObjectURL(new Blob([seiten.slice(pos, pos + len)], { type: "image/jpeg" }));
+          $(ziel).appendChild(img); pos += len;
+        }
+      } catch { $(ziel).textContent = "Konnte nicht geladen werden. Bitte Seite neu laden."; }
+    }
+    await seitenZeigen("antwort.bin", "antwort", "Antwort auf Ihre Rückmeldung");
+    await seitenZeigen("konzept.bin", "pages", "Konzept");
     try {
       $("vstatus").textContent = "Video wird geladen …";
       const film = await entschluesseln(key, await laden("video.bin"));
